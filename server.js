@@ -11,7 +11,22 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors({ origin: 'http://localhost:5173' })); // Frontend URL adjust karo (production mein)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://edmire-ai-kizi.vercel.app",
+  "https://edmirai.com"
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  }
+}));
+
 app.use(express.json()); // JSON bodies parse karne ke liye
 app.use(express.urlencoded({ extended: true })); // URL-encoded bodies ke liye
 
