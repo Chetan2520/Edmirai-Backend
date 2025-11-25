@@ -14,7 +14,7 @@ app.use(helmet()); // Security headers
 const allowedOrigins = [
   "http://localhost:5173",
   "https://edmire-ai-kizi.vercel.app",
-  "https://edmirai.com"
+  "https://edmirai.com", "www.edmirai.com"
 ];
 
 app.use(cors({
