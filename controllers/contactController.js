@@ -2,20 +2,25 @@ const nodemailer = require('nodemailer');
 const Contact = require('../models/Contact');
 require('dotenv').config();
 
+// 1. UPDATED TRANSPORTER CONFIGURATION:
+// Use explicit host/port for better stability and security with Gmail (SSL/TLS)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com', // Gmail SMTP Host
+  port: 465,             // Secure port for SSL
+  secure: true,          // Use SSL/TLS
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+    user: process.env.SMTP_USER, // Your full Gmail address
+    pass: process.env.SMTP_PASS  // MUST be the 16-digit App Password
   }
 });
 
 // Startup pe SMTP verify
 transporter.verify((error, success) => {
   if (error) {
-    console.error('SMTP config error:', error);
+    // If this fails, check SMTP_USER and SMTP_PASS (App Password) in .env
+    console.error('❌ SMTP CONFIG ERROR:', error.message);
   } else {
-    console.log('SMTP ready for Gmail emails!');
+    console.log('✅ SMTP ready for Gmail emails!');
   }
 });
 
@@ -29,15 +34,16 @@ const sendContactEmail = async (req, res) => {
     }
 
     // DB mein save karo
+    // Assuming Contact model and MongoDB connection are set up correctly
     const newContact = new Contact({ name, phone, board, grade });
     await newContact.save();
     console.log('Enquiry saved to DB:', newContact._id);
 
-    // Email bhejo – to: ADMIN_EMAIL ya fallback SMTP_USER (tumhare main email pe)
-    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;  // Yeh key change: Tumhare email pe hi jaayega!
+    // Email bhejo – to: ADMIN_EMAIL ya fallback SMTP_USER
+    const adminEmail =  process.env.SMTP_USER; 
     const mailOptions = {
-      from: `"Contact Form" <${process.env.SMTP_USER}>`,  // From: Tumhara email, lekin friendly name se
-      to: adminEmail,  // Tumhare email pe (jo .env mein add kiya)
+      from: `"Contact Form" <${process.env.SMTP_USER}>`, 
+      to: adminEmail, 
       subject: `New Student Enquiry: ${name} wants to join!`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
@@ -50,7 +56,7 @@ const sendContactEmail = async (req, res) => {
             <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold;">Grade:</td><td style="padding: 10px; border: 1px solid #eee;">${grade}</td></tr>
           </table>
           <hr style="border: 1px solid #ccc;">
-          <p style="font-size: 12px; color: #666; text-align: center;">This is an automated notification from your EdmireAI contact form. Reply to this email to connect with the student.</p>
+          <p style="font-size: 12px; color: #666; text-align: center;">This is an automated notification from your EdmireAI contact form.</p>
         </div>
       `
     };
@@ -61,8 +67,17 @@ const sendContactEmail = async (req, res) => {
     res.status(200).json({ message: 'Enquiry submitted successfully! We’ll get back to you soon.' });
 
   } catch (error) {
-    console.error('Error in sendContactEmail:', error);
-    res.status(500).json({ message: 'Failed to send Enquiry. Please try again later.' });
+    // IMPORTANT: Log the full error to the console for detailed debugging
+    console.error('🔴 CRITICAL ERROR in sendContactEmail:', error.message, error);
+    
+    // Check for common auth errors and return a user-friendly message
+    let userMessage = 'Failed to send Enquiry. Please check server logs for SMTP errors.';
+    
+    if (error.message.includes('authentication')) {
+        userMessage = 'Authentication failed. Please verify the 16-digit App Password in the .env file.';
+    }
+console.error('🔴 CRITICAL ERROR in sendContactEmail:', error.message, error);
+    res.status(500).json({ message: userMessage });
   }
 };
 

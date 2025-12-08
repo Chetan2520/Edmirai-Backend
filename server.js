@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
-
+const facultyRoutes = require('./routes/facultyRoutes');
 const contactRoutes  = require('./routes/contact');
 
 const app = express();
@@ -37,7 +37,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Routes
 app.use('/api', contactRoutes);
-
+app.use('/api/faculty', facultyRoutes);
 // Health check route (test ke liye)
 app.get('/', (req, res) => {
   res.json({ message: 'Backend is running smoothly!' });
