@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet()); // Security headers
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173","https://edmire-ai-kizi.vercel.app/",
   "https://edmire-ai-kizi.vercel.app",
   "https://edmirai.com", "www.edmirai.com"
 ];
